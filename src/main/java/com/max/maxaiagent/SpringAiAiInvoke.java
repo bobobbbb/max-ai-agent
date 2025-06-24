@@ -20,5 +20,9 @@ public class SpringAiAiInvoke implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         chatClientService.doChat("你好", "1");
+        //睡眠5秒
+        Thread.sleep(5000);
+
+        chatClientService.doChat("给我讲讲tcp吧", "1");
     }
 }
