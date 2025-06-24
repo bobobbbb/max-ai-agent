@@ -1,5 +1,6 @@
 package com.max.maxaiagent;
 
+import com.max.maxaiagent.service.ChatClientService;
 import jakarta.annotation.Resource;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -13,12 +14,11 @@ public class SpringAiAiInvoke implements CommandLineRunner {
 
     @Resource
     private ChatModel dashscopeChatModel;
+    @Resource
+    private ChatClientService chatClientService;
 
     @Override
     public void run(String... args) throws Exception {
-        AssistantMessage output = dashscopeChatModel.call(new Prompt("你好，我是Max"))
-                .getResult()
-                .getOutput();
-        System.out.println(output.getText());
+        chatClientService.doChat("你好", "1");
     }
 }
