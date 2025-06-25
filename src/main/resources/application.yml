@@ -24,7 +24,7 @@ springdoc:
   group-configs:
     - group: 'default'
       paths-to-match: '/**'
-      packages-to-scan: com.max.maxaiagentcontroller
+      packages-to-scan: com.max.maxaiagent.controller
 # knife4j
 knife4j:
   enable: true

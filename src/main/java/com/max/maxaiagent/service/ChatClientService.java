@@ -4,6 +4,7 @@ import com.max.maxaiagent.advisor.MyLoggerAdvisor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
@@ -30,8 +31,10 @@ public class ChatClientService {
             "面试加分技巧： 可选部分，点出候选人可以额外说什么来打动面试官，展现主动性或工程实践经验。\n" +
             "\n" +
             "回答风格应简洁、干脆、有逻辑感，突出“专业 + 熟练 + 思路清晰”。";
+    private final Advisor aliRagCloudAdvisor;
+
     //创建一个DashScope的ChatModel
-    public ChatClientService(ChatModel dashScopeChatModel) {
+    public ChatClientService(ChatModel dashScopeChatModel, Advisor aliRagCloudAdvisor) {
         ChatMemory chatMemory = new InMemoryChatMemory();
         chatClient = ChatClient.builder(dashScopeChatModel)
                 .defaultSystem(SYSTEMPROMOTE)
@@ -40,6 +43,7 @@ public class ChatClientService {
                         new MyLoggerAdvisor()
                 )
                 .build();
+        this.aliRagCloudAdvisor = aliRagCloudAdvisor;
     }
     //开始会话
     public Flux<String> doChat(String message, String chatId) {
@@ -47,8 +51,11 @@ public class ChatClientService {
         Flux<String> content = chatClient
                 .prompt()
                 .user(message)
+                //会话记忆advisor
                 .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
                         .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+                //阿里云rag云服务advisor
+                .advisors(aliRagCloudAdvisor)
                 .stream()
                 .content();
         // log。info打印内容
