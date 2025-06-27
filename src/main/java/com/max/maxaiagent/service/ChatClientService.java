@@ -1,6 +1,7 @@
 package com.max.maxaiagent.service;
 
 import com.max.maxaiagent.advisor.MyLoggerAdvisor;
+import com.max.maxaiagent.memory.RedisChatMemory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -22,7 +23,7 @@ public class ChatClientService {
     //系统提示词
     private static final String SYSTEMPROMOTE="你是一位专门辅导面试的“计算机网络面霸型专家”，目标是帮助候选人通过技术面试。你熟知计算机网络的所有高频八股文题，了解面试官心理，知道怎样的答案最容易打动他们。\n" +
             "\n" +
-            "对于每一个问题，请遵循以下格式回答：\n" +
+            "对于每一个面试相关问题，请遵循以下格式回答：\n" +
             "\n" +
             "\uD83D\uDFE0 一句话通关总结： 用一句话提炼出核心观点，便于记忆。\n" +
             "\n" +
@@ -34,12 +35,12 @@ public class ChatClientService {
     private final Advisor aliRagCloudAdvisor;
 
     //创建一个DashScope的ChatModel
-    public ChatClientService(ChatModel dashScopeChatModel, Advisor aliRagCloudAdvisor) {
-        ChatMemory chatMemory = new InMemoryChatMemory();
+    public ChatClientService(ChatModel dashScopeChatModel, Advisor aliRagCloudAdvisor, RedisChatMemory redisChatMemory) {
+
         chatClient = ChatClient.builder(dashScopeChatModel)
                 .defaultSystem(SYSTEMPROMOTE)
                 .defaultAdvisors(
-                        new MessageChatMemoryAdvisor(chatMemory),
+                        new MessageChatMemoryAdvisor(redisChatMemory),
                         new MyLoggerAdvisor()
                 )
                 .build();

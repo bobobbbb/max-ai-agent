@@ -9,6 +9,10 @@ spring:
       chat:
         options:
           model: qwen-plus
+  data:
+    redis:
+      host: localhost
+
 server:
   port: 8123
   servlet:
