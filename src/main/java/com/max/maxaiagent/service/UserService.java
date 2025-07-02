@@ -6,7 +6,7 @@ import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.max.maxaiagent.dto.RegisterDTO;
-import com.max.maxaiagent.dto.UserInfoVO;
+import com.max.maxaiagent.vo.UserInfoVO;
 import com.max.maxaiagent.entity.User;
 import com.max.maxaiagent.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.max.maxaiagent.dto;
+package com.max.maxaiagent.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;

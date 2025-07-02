@@ -1,10 +1,9 @@
 package com.max.maxaiagent.config;
 
 import com.max.maxaiagent.advisor.MyLoggerAdvisor;
-import com.max.maxaiagent.memory.RedisChatMemory;
+import com.max.maxaiagent.memory.MyChatMemory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,11 +22,11 @@ public class ChatClientConfig {
             "\n" +
             "回答风格应简洁、干脆、有逻辑感，突出“专业 + 熟练 + 思路清晰”。";
     @Bean
-    public ChatClient dashScopeChatClient(ChatModel dashScopeChatModel,RedisChatMemory redisChatMemory){
+    public ChatClient dashScopeChatClient(ChatModel dashScopeChatModel, MyChatMemory myChatMemory){
         return ChatClient.builder(dashScopeChatModel)
                 .defaultSystem(SYSTEMPROMOTE)
                 .defaultAdvisors(
-                        new MessageChatMemoryAdvisor(redisChatMemory),
+                        new MessageChatMemoryAdvisor(myChatMemory),
                         new MyLoggerAdvisor()
                 )
                 .build();

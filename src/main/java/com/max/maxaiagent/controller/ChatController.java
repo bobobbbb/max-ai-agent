@@ -1,6 +1,7 @@
 package com.max.maxaiagent.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
+import cn.dev33.satoken.stp.StpUtil;
 import com.max.maxaiagent.service.ChatClientService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ public class ChatController {
 
     @PostMapping("/chat")
     public Flux<String> doChat(String message, String chatId){
-        return chatClientService.doChat(message, chatId);
+        String loginIdAsString = StpUtil.getLoginIdAsString();
+        return chatClientService.doChat(message, loginIdAsString+":"+chatId);
     }
 }

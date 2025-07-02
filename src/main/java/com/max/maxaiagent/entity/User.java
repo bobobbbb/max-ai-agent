@@ -76,4 +76,13 @@ public class User implements Serializable {
      */
     @TableField(value = "register_time", fill = FieldFill.INSERT)
     private LocalDateTime registerTime;
+
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    @TableField(value = "update_time",fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+
+    @TableLogic
+    private Integer isDeleted;
 } 
