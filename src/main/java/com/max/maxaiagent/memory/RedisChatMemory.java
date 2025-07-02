@@ -1,6 +1,7 @@
 package com.max.maxaiagent.memory;
  
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -14,6 +15,7 @@ import java.util.List;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class RedisChatMemory implements ChatMemory {
     private static final String REDIS_KEY_PREFIX = "chatmemory:";
     private final RedisTemplate<String, Message> redisTemplate;
@@ -22,6 +24,7 @@ public class RedisChatMemory implements ChatMemory {
     public void add(String conversationId, List<Message> messages) {
         String key = REDIS_KEY_PREFIX + conversationId;
         // 存储到 Redis
+        log.info(messages.toString());
         redisTemplate.opsForList().rightPushAll(key, messages);
     }
  
