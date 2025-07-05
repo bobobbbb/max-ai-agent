@@ -30,3 +30,15 @@ CREATE TABLE `ai_chat_context` (
                                    KEY `idx_user_chat` (`user_id`, `chat_id`),
                                    KEY `idx_chat_id` (`chat_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI Agent 上下文表';
+CREATE TABLE `ai_chat_question` (
+                                   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                                   `user_id` BIGINT NOT NULL COMMENT '用户ID',
+                                   `chat_id` BIGINT NOT NULL COMMENT '会话ID',
+                                   `question` TEXT NOT NULL COMMENT '用户问题',
+                                   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                   `is_deleted` TINYINT DEFAULT 0 COMMENT '是否删除 0=未删除 1=已删除',
+                                   PRIMARY KEY (`id`),
+                                   KEY `idx_user_chat` (`user_id`, `chat_id`),
+                                   KEY `idx_chat_id` (`chat_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI Agent 问题表';

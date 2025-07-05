@@ -1,7 +1,9 @@
 package com.max.maxaiagent.memory;
  
 import com.max.maxaiagent.entity.AiChatContext;
+import com.max.maxaiagent.entity.AiChatQuestion;
 import com.max.maxaiagent.service.AiChatContextService;
+import com.max.maxaiagent.service.AiChatQuestionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -21,6 +23,8 @@ import java.util.List;
 public class MyChatMemory implements ChatMemory {
 
     private final AiChatContextService aiChatContextService;
+
+    private final AiChatQuestionService  aiChatQuestionService;
     private static final String REDIS_KEY_PREFIX = "chatmemory:";
     private final RedisTemplate<String, Message> redisTemplate;
  
@@ -36,6 +40,14 @@ public class MyChatMemory implements ChatMemory {
         aiChatContext.setChatId(chatId);
         aiChatContext.setContent(messages.toString());
         aiChatContextService.insertAiChatContext(aiChatContext);
+        //检查如果question表中没有这个chatId的话，将用户的这条数据放进去
+        if(aiChatQuestionService.getChatQuestionByChatId(Long.valueOf(chatId)).isEmpty()){
+            AiChatQuestion aiChatQuestion = new AiChatQuestion();
+            aiChatQuestion.setUserId(Long.valueOf(userId));
+            aiChatQuestion.setChatId(Long.valueOf(chatId));
+            aiChatQuestion.setQuestion(messages.toString());
+            aiChatQuestionService.saveQuestion(aiChatQuestion);
+        }
     }
     @Override
     public List<Message> get(String conversationId, int lastN) {
