@@ -15,13 +15,13 @@ public class AiChatQuestionService extends ServiceImpl<AiChatQuestionMapper, AiC
     public List<AiChatQuestion> getChatQuestionByChatId(Long chatId) {
         return list(new LambdaQueryWrapper<AiChatQuestion>()
                 .eq(AiChatQuestion::getChatId, chatId)
-                .orderByAsc(AiChatQuestion::getCreateTime));
+                .orderByDesc(AiChatQuestion::getCreateTime));
     }
 
     public List<AiChatQuestion> getChatQuestionByUserId(Long userId) {
         return list(new LambdaQueryWrapper<AiChatQuestion>()
                 .eq(AiChatQuestion::getUserId, userId)
-                .orderByAsc(AiChatQuestion::getCreateTime));
+                .orderByDesc(AiChatQuestion::getCreateTime));
     }
     
     public void saveQuestion(AiChatQuestion aiChatQuestion){

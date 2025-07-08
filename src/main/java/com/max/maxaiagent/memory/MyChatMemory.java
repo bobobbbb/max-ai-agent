@@ -46,6 +46,13 @@ public class MyChatMemory implements ChatMemory {
             aiChatQuestion.setUserId(Long.valueOf(userId));
             aiChatQuestion.setChatId(Long.valueOf(chatId));
             aiChatQuestion.setQuestion(messages.toString());
+            // 手动设置时间作为兜底方案
+            if (aiChatQuestion.getCreateTime() == null) {
+                aiChatQuestion.setCreateTime(java.time.LocalDateTime.now());
+            }
+            if (aiChatQuestion.getUpdateTime() == null) {
+                aiChatQuestion.setUpdateTime(java.time.LocalDateTime.now());
+            }
             aiChatQuestionService.saveQuestion(aiChatQuestion);
         }
     }
