@@ -1,12 +1,14 @@
 package com.max.maxaiagent.service;
 
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.json.JSONUtil;
 import com.max.maxaiagent.entity.AiChatQuestion;
 import com.max.maxaiagent.vo.HistoryQuestionVO;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -42,8 +44,8 @@ public class ChatClientService {
                 //阿里云rag云服务advisor
                 .advisors(aliRagCloudAdvisor)
                 .stream()
-                .content();
-        content.subscribe(it -> log.info("doChat emit: " + it));
+                .content()
+                .doOnNext(System.out::println);
         return content;
     }
     public List<HistoryQuestionVO> getHistory(String chatId){

@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.max.maxaiagent.common.Result;
 import com.max.maxaiagent.service.ChatClientService;
 import com.max.maxaiagent.vo.HistoryQuestionVO;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
