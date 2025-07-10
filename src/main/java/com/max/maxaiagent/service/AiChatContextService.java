@@ -94,6 +94,19 @@ public class AiChatContextService extends ServiceImpl<AiChatContextMapper, AiCha
                 .last("LIMIT " + limit));
     }
 
+    /**
+     * 分页查询会话ID对应的最新10条消息
+     *
+     * @param chatId 会话ID
+     * @return 最新的10条聊天上下文列表
+     */
+    public List<AiChatContext> getLatestMessagesByChatId(String chatId) {
+        return list(new LambdaQueryWrapper<AiChatContext>()
+                .eq(AiChatContext::getChatId, chatId)
+                .orderByDesc(AiChatContext::getCreateTime)
+                .last("LIMIT 10"));
+    }
+
 
 
 } 

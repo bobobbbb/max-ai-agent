@@ -3,7 +3,9 @@ package com.max.maxaiagent.service;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.json.JSONUtil;
 import com.max.maxaiagent.entity.AiChatQuestion;
+import com.max.maxaiagent.entity.AiChatContext;
 import com.max.maxaiagent.vo.HistoryQuestionVO;
+import com.max.maxaiagent.vo.ChatContextPageVO;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -27,6 +29,9 @@ public class ChatClientService {
     private ChatClient dashScopeChatClient;
     @Autowired
     private AiChatQuestionService aiChatQuestionService;
+    
+    @Autowired
+    private AiChatContextService aiChatContextService;
 
     @Autowired
     private Advisor aliRagCloudAdvisor;
@@ -58,6 +63,31 @@ public class ChatClientService {
             historyQuestionVO.setUserId(StpUtil.getLoginIdAsLong());
             historyQuestionVO.setChatId(aiChatQuestion.getChatId());
             return historyQuestionVO;
+        }).toList();
+    }
+    
+    /**
+     * 根据chatId分页查询最新的10条聊天消息
+     *
+     * @param chatId 会话ID
+     * @return 最新的10条聊天消息列表
+     */
+    public List<ChatContextPageVO> getLatestMessagesByChatId(String chatId) {
+        log.info("根据chatId查询最新10条消息, chatId: {}", chatId);
+        
+        // 查询最新的10条聊天上下文
+        List<AiChatContext> aiChatContexts = aiChatContextService.getLatestMessagesByChatId(chatId);
+        
+        // 转换为VO对象并返回
+        return aiChatContexts.stream().map(context -> {
+            ChatContextPageVO vo = new ChatContextPageVO();
+            vo.setId(context.getId());
+            vo.setUserId(context.getUserId());
+            vo.setChatId(context.getChatId());
+            vo.setContent(context.getContent());
+            vo.setCreateTime(context.getCreateTime());
+            vo.setUpdateTime(context.getUpdateTime());
+            return vo;
         }).toList();
     }
 }
