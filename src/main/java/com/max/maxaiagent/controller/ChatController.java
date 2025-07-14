@@ -35,13 +35,8 @@ public class ChatController {
 
         // 获取前端发送的Last-Event-ID
         String lastEventId = request.getHeader("Last-Event-ID");
-        if (lastEventId != null) {
-            log.info("收到重连请求，Last-Event-ID: {}", lastEventId);
-            // 您可以在这里根据lastEventId进行断点续传或其他处理逻辑
-            // 例如：跳过已发送的消息，或者从特定位置开始流式传输
-        }
 
-        return chatClientService.doChat(message, loginIdAsString + ":" + chatId);
+        return chatClientService.doChat(message, loginIdAsString + ":" + chatId,lastEventId);
     }
 
     @GetMapping("/getHistory")

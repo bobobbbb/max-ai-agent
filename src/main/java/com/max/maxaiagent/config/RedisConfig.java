@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
@@ -19,6 +20,27 @@ public class RedisConfig {
     @Bean
     public ObjectMapper objectMapper() {
         return new ObjectMapper().registerModule(new JavaTimeModule());
+    }
+
+    /**
+     * 配置通用的Redis模板，用于处理各种数据类型
+     */
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
+
+        // 使用String序列化器作为key的序列化方式
+        template.setKeySerializer(new StringRedisSerializer());
+        // 使用通用的Jackson序列化器作为value的序列化方式
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper()));
+
+        // 设置hash类型的key和value序列化方式
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper()));
+
+        template.afterPropertiesSet();
+        return template;
     }
 
     /**
