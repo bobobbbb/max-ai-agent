@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
@@ -50,9 +51,16 @@ public class ChatClientService {
                 .advisors(aliRagCloudAdvisor)
                 .stream()
                 .content()
+                .map(text -> {
+                    String id = UUID.randomUUID().toString();
+                    // 拼接成 SSE 格式，注意末尾要两个换行符
+                    return "id: " + id + "\n" +
+                            "data: " + text + "\n\n";
+                })
                 .doOnNext(System.out::println);
         return content;
     }
+
     public List<HistoryQuestionVO> getHistory(String chatId){
         //查询用户最后问的10条问题
         List<AiChatQuestion> aiChatQuestions = aiChatQuestionService.getChatQuestionByUserId(StpUtil.getLoginIdAsLong());

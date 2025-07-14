@@ -12,6 +12,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
+import java.io.IOException;
 
 /**
  * 全局异常处理器
@@ -84,6 +86,35 @@ public class GlobalExceptionHandler {
         }
         log.warn("参数绑定失败: {}", message);
         return Result.error(400, message.toString());
+    }
+
+    /**
+     * 处理SSE客户端断开连接异常
+     * 这是正常现象，客户端刷新或关闭页面时会触发
+     */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e) {
+        // 不返回任何内容，因为连接已断开
+        // 只记录调试级别日志，避免污染错误日志
+        log.debug("SSE客户端连接已断开: {}", e.getMessage());
+    }
+
+    /**
+     * 处理IO异常（如网络中断、Broken pipe等）
+     * 在SSE流式传输中，客户端断开连接时经常出现
+     */
+    @ExceptionHandler(IOException.class)
+    public void handleIOException(IOException e) {
+        // 检查是否是连接中断相关的异常
+        String message = e.getMessage();
+        if (message != null && (
+            message.contains("Broken pipe") ||
+            message.contains("Connection reset") ||
+            message.contains("远程主机强迫关闭了一个现有的连接"))) {
+            log.debug("网络连接已断开: {}", message);
+        } else {
+            log.warn("IO异常: ", e);
+        }
     }
 
     /**
