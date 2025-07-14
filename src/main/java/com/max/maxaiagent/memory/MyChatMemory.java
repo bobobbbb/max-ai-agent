@@ -56,6 +56,7 @@ public class MyChatMemory implements ChatMemory {
         AiChatContext aiChatContext = new AiChatContext();
         aiChatContext.setUserId(Long.valueOf(userId));
         aiChatContext.setChatId(chatId);
+        aiChatContext.setMessageId(messageId);
         aiChatContext.setContent(messages.toString());
         //插入数据库
         //todo 后续换成rabbitmq

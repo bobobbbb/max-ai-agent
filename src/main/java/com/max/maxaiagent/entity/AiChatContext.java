@@ -36,6 +36,12 @@ public class AiChatContext implements Serializable {
     private String chatId;
 
     /**
+     * 会话ID
+     */
+    @TableField("message_id")
+    private String messageId;
+
+    /**
      * 对话上下文内容
      */
     @TableField("content")
