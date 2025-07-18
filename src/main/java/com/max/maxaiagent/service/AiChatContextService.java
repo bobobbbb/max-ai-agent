@@ -95,16 +95,32 @@ public class AiChatContextService extends ServiceImpl<AiChatContextMapper, AiCha
     }
 
     /**
-     * 分页查询会话ID对应的最新10条消息
+     * 分页查询会话ID对应的消息
      *
      * @param chatId 会话ID
-     * @return 最新的10条聊天上下文列表
+     * @param pageNum 页码，从1开始
+     * @param pageSize 每页大小
+     * @return 分页的聊天上下文列表
      */
-    public List<AiChatContext> getLatestMessagesByChatId(String chatId) {
+    public List<AiChatContext> getLatestMessagesByChatId(String chatId, Integer pageNum, Integer pageSize) {
+        // 计算偏移量
+        int offset = (pageNum - 1) * pageSize;
+        
         return list(new LambdaQueryWrapper<AiChatContext>()
                 .eq(AiChatContext::getChatId, chatId)
                 .orderByDesc(AiChatContext::getCreateTime)
-                .last("LIMIT 10"));
+                .last("LIMIT " + pageSize + " OFFSET " + offset));
+    }
+
+    /**
+     * 根据会话ID统计消息总数
+     *
+     * @param chatId 会话ID
+     * @return 消息总数
+     */
+    public Long countByChatId(String chatId) {
+        return count(new LambdaQueryWrapper<AiChatContext>()
+                .eq(AiChatContext::getChatId, chatId));
     }
 
 

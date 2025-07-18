@@ -11,10 +11,7 @@ import java.time.LocalDateTime;
 @Data
 @Schema(description = "聊天上下文分页查询VO")
 public class ChatContextPageVO {
-    
-    @Schema(description = "消息ID")
-    private Long id;
-    
+
     @Schema(description = "用户ID")
     private Long userId;
     
@@ -23,10 +20,5 @@ public class ChatContextPageVO {
     
     @Schema(description = "对话内容")
     private String content;
-    
-    @Schema(description = "创建时间")
-    private LocalDateTime createTime;
-    
-    @Schema(description = "更新时间")
-    private LocalDateTime updateTime;
+
 } 

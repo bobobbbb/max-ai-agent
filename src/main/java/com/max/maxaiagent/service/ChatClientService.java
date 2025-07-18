@@ -1,32 +1,30 @@
 package com.max.maxaiagent.service;
 
 import cn.dev33.satoken.stp.StpUtil;
-import cn.hutool.json.JSONUtil;
+import com.max.maxaiagent.dto.ChatContentDTO;
 import com.max.maxaiagent.entity.AiChatQuestion;
 import com.max.maxaiagent.entity.AiChatContext;
 import com.max.maxaiagent.vo.HistoryQuestionVO;
 import com.max.maxaiagent.vo.ChatContextPageVO;
+import com.max.maxaiagent.vo.PageResult;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
-import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Range;
 import org.springframework.data.redis.connection.stream.*;
-import org.springframework.data.redis.core.StreamOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
@@ -34,8 +32,15 @@ import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvis
 @Component
 @Slf4j
 public class ChatClientService {
+
+    private static final String CHAT_STREAM = "chat-stream:";
+
+    @Value("${lastN}")
+    private int lastN;
+
     @Autowired
     private ChatClient dashScopeChatClient;
+
     @Autowired
     private AiChatQuestionService aiChatQuestionService;
     
@@ -44,12 +49,16 @@ public class ChatClientService {
 
     @Autowired
     private Advisor aliRagCloudAdvisor;
+
+    private static final String REDIS_KEY_PREFIX = "chatmemory:";
     
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-    
-    @Value("${lastN}")
-    private int lastN;
+    private RedisTemplate<String, Object> streamRedisTemplate;
+
+    @Autowired
+    private RedisTemplate<String, ChatContentDTO> jsonRedisTemplate;
+
+
     
     /**
      * 格式化SSE事件
@@ -95,12 +104,11 @@ public class ChatClientService {
                         // 生成递增ID
                         String streamId = timestamp + "-" + sequence.getAndIncrement();
                         // 将消息存储到Redis Stream
-                        redisTemplate.opsForStream().add(
+                        streamRedisTemplate.opsForStream().add(
                                 StreamRecords.mapBacked(Map.of("message", text))
-                                        .withStreamKey("chat-stream" + chatId)
+                                        .withStreamKey(CHAT_STREAM + chatId)
                                         .withId(RecordId.of(streamId))
                         );
-
                         // 转换为SSE格式
                         return "id: " + streamId + "\n" +
                                 "data: " + text + "\n\n";
@@ -113,7 +121,7 @@ public class ChatClientService {
 
             try {
                 // 从Redis Stream读取历史消息
-                List<MapRecord<String, Object, Object>> historyMessages = redisTemplate
+                List<MapRecord<String, Object, Object>> historyMessages = streamRedisTemplate
                         .opsForStream()
                         .range(streamKey, Range.closed("-", lastEventId));
 
@@ -130,7 +138,7 @@ public class ChatClientService {
                             while (!emitter.isCancelled()) {
                                 // 阻塞式读取新消息
                                 List<MapRecord<String, Object, Object>> records =
-                                        redisTemplate.opsForStream()
+                                        streamRedisTemplate.opsForStream()
                                                 .read(StreamReadOptions.empty()
                                                                 .block(Duration.ofSeconds(30))  // 30秒超时
                                                                 .count(10),  // 每次最多读10条
@@ -174,41 +182,82 @@ public class ChatClientService {
         }
     }
 
-    public List<HistoryQuestionVO> getHistory(String chatId){
+    public PageResult<HistoryQuestionVO> getHistory(Integer pageNum, Integer pageSize){
+
+        Integer offset = (pageNum-1)*pageSize;
+
         //查询用户最后问的10条问题
-        List<AiChatQuestion> aiChatQuestions = aiChatQuestionService.getChatQuestionByUserId(StpUtil.getLoginIdAsLong());
+        List<AiChatQuestion> aiChatQuestions = aiChatQuestionService.getChatQuestionByUserId(StpUtil.getLoginIdAsLong(),offset,pageSize);
+
+        Long total = (long) aiChatQuestions.size();
+
         //组装vo
-        return aiChatQuestions.stream().map(aiChatQuestion -> {
+        List<HistoryQuestionVO> list = aiChatQuestions.stream().map(aiChatQuestion -> {
             HistoryQuestionVO historyQuestionVO = new HistoryQuestionVO();
             historyQuestionVO.setQuestion(aiChatQuestion.getQuestion());
             historyQuestionVO.setUserId(StpUtil.getLoginIdAsLong());
             historyQuestionVO.setChatId(aiChatQuestion.getChatId());
             return historyQuestionVO;
         }).toList();
+
+        return PageResult.of(pageNum,pageSize,total,list);
     }
     
     /**
-     * 根据chatId分页查询最新的10条聊天消息
+     * 根据chatId分页查询聊天消息
      *
      * @param chatId 会话ID
-     * @return 最新的10条聊天消息列表
+     * @param pageNum 页码，从1开始
+     * @param pageSize 每页大小
+     * @return 分页的聊天消息结果
      */
-    public List<ChatContextPageVO> getLatestMessagesByChatId(String chatId) {
-        log.info("根据chatId查询最新10条消息, chatId: {}", chatId);
+    public PageResult<ChatContextPageVO> getLatestMessagesByChatId(String chatId, Integer pageNum, Integer pageSize) {
+
+        log.info("根据chatId分页查询消息, chatId: {}, pageNum: {}, pageSize: {}", chatId, pageNum, pageSize);
         
-        // 查询最新的10条聊天上下文
-        List<AiChatContext> aiChatContexts = aiChatContextService.getLatestMessagesByChatId(chatId);
-        
-        // 转换为VO对象并返回
-        return aiChatContexts.stream().map(context -> {
-            ChatContextPageVO vo = new ChatContextPageVO();
-            vo.setId(context.getId());
-            vo.setUserId(context.getUserId());
-            vo.setChatId(context.getChatId());
-            vo.setContent(context.getContent());
-            vo.setCreateTime(context.getCreateTime());
-            vo.setUpdateTime(context.getUpdateTime());
-            return vo;
-        }).toList();
+        // 参数校验
+        if (pageNum == null || pageNum < 1) {
+            pageNum = 1;
+        }
+        if (pageSize == null || pageSize < 1 || pageSize > 100) {
+            pageSize = 10;
+        }
+
+        int offset = (pageNum-1)*pageSize;
+
+        String key = REDIS_KEY_PREFIX + chatId;
+
+        List<ChatContextPageVO> records = new ArrayList<>();
+        //如果大于20的话，走mysql
+        if(offset<=20){
+
+            List<ChatContentDTO> chatContentDTOList = jsonRedisTemplate.opsForList().range(key, -10 - offset, -1 - offset);
+
+            if(chatContentDTOList!=null && !chatContentDTOList.isEmpty()) {
+                for (ChatContentDTO chatContentDTO : chatContentDTOList) {
+                    ChatContextPageVO vo = new ChatContextPageVO();
+                    vo.setChatId(chatId);
+                    vo.setUserId(StpUtil.getLoginIdAsLong());
+                    vo.setContent(chatContentDTO.getMessages().toString());
+                    records.add(vo);
+                }
+            }
+
+        }else{
+            // 分页查询聊天上下文
+            List<AiChatContext> aiChatContexts = aiChatContextService.getLatestMessagesByChatId(chatId, pageNum, pageSize);
+
+            records.addAll(aiChatContexts.stream().map(context -> {
+                ChatContextPageVO vo = new ChatContextPageVO();
+                vo.setUserId(context.getUserId());
+                vo.setChatId(context.getChatId());
+                vo.setContent(context.getContent());
+                return vo;
+            }).toList());
+        }
+
+        Long total = aiChatContextService.countByChatId(chatId);
+
+        return PageResult.of(pageNum, pageSize, total, records);
     }
 }

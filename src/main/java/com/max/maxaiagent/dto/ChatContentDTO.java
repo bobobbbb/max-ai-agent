@@ -7,6 +7,7 @@ import java.util.List;
 
 @Data
 public class ChatContentDTO {
+
     private Long chatId;
 
     private Long messageId;

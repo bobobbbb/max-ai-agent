@@ -2,6 +2,7 @@ package com.max.maxaiagent.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.collection.ConcurrentHashSet;
+import com.max.maxaiagent.vo.PageResult;
 import com.max.maxaiagent.common.Result;
 import com.max.maxaiagent.service.ChatClientService;
 import com.max.maxaiagent.vo.HistoryQuestionVO;
@@ -40,8 +41,9 @@ public class ChatController {
     }
 
     @GetMapping("/getHistory")
-    public Result<List<HistoryQuestionVO>> getHistoryChat(String chatId){
-        return Result.success(chatClientService.getHistory(chatId));
+    public Result<PageResult<HistoryQuestionVO>> getHistoryChat(Integer pageNum, Integer pageSize) {
+        PageResult<HistoryQuestionVO> pageResult = chatClientService.getHistory(pageNum, pageSize);
+        return Result.success(pageResult);
     }
 
     /**
@@ -51,9 +53,11 @@ public class ChatController {
      * @return 最新的10条聊天消息
      */
     @GetMapping("/getLatestMessages")
-    public Result<List<ChatContextPageVO>> getLatestMessagesByChatId(@RequestParam String chatId) {
-        List<ChatContextPageVO> messages = chatClientService.getLatestMessagesByChatId(chatId);
-        return Result.success(messages);
+    public Result<PageResult<ChatContextPageVO>> getLatestMessagesByChatId(
+            @RequestParam String chatId,
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        PageResult<ChatContextPageVO> pageResult = chatClientService.getLatestMessagesByChatId(chatId, pageNum, pageSize);
+        return Result.success(pageResult);
     }
-
 }

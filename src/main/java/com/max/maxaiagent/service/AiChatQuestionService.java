@@ -18,10 +18,11 @@ public class AiChatQuestionService extends ServiceImpl<AiChatQuestionMapper, AiC
                 .orderByDesc(AiChatQuestion::getCreateTime));
     }
 
-    public List<AiChatQuestion> getChatQuestionByUserId(Long userId) {
+    public List<AiChatQuestion> getChatQuestionByUserId(Long userId , Integer offset, Integer pageSize) {
         return list(new LambdaQueryWrapper<AiChatQuestion>()
                 .eq(AiChatQuestion::getUserId, userId)
-                .orderByDesc(AiChatQuestion::getCreateTime));
+                .orderByDesc(AiChatQuestion::getCreateTime)
+                .last("LIMIT"+ pageSize +" OFFSET "+ offset));
     }
     
     public void saveQuestion(AiChatQuestion aiChatQuestion){
