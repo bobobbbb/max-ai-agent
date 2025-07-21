@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.max.maxaiagent.dto.ChatContentDTO;
 import com.max.maxaiagent.entity.AiChatQuestion;
 import com.max.maxaiagent.entity.AiChatContext;
+import com.max.maxaiagent.tool.WebSearchTool;
 import com.max.maxaiagent.vo.HistoryQuestionVO;
 import com.max.maxaiagent.vo.ChatContextPageVO;
 import com.max.maxaiagent.vo.PageResult;
@@ -37,6 +38,10 @@ public class ChatClientService {
 
     @Value("${lastN}")
     private int lastN;
+
+    @Value("${SEARCH_API_KEY}")
+    private String webSearchApiKey;
+
 
     @Autowired
     private ChatClient dashScopeChatClient;
@@ -98,6 +103,7 @@ public class ChatClientService {
                             .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, lastN))
                     // 添加阿里云RAG服务advisor
                     .advisors(aliRagCloudAdvisor)
+                    .tools(new WebSearchTool(webSearchApiKey))
                     .stream()
                     .content()
                     .map(text -> {
